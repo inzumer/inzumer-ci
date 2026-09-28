@@ -18,7 +18,7 @@ on:
       check:
         description: Command run before publishing (build, tests…).
         type: string
-        default: ""
+        default: ''
       version:
         description: Command that applies the changesets.
         type: string

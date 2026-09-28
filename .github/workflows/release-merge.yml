@@ -20,7 +20,7 @@ on:
       deploy-workflow:
         description: Workflow file to dispatch on the production branch after merging (e.g. pages.yml).
         type: string
-        default: ""
+        default: ''
       ci-ref:
         type: string
         default: v1

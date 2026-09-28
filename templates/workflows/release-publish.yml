@@ -3,8 +3,8 @@ name: Release publish
 # Mondays at noon (Madrid): run CI again on the release PR, merge it, tag, backport and deploy.
 on:
   schedule:
-    - cron: "0 10 * * 1"
-    - cron: "0 11 * * 1"
+    - cron: '0 10 * * 1'
+    - cron: '0 11 * * 1'
   workflow_dispatch:
 
 permissions:

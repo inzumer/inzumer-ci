@@ -3,8 +3,8 @@ name: Release prepare
 # Fridays at noon (Madrid): cut the release PR and run CI on it.
 on:
   schedule:
-    - cron: "0 10 * * 5"
-    - cron: "0 11 * * 5"
+    - cron: '0 10 * * 5'
+    - cron: '0 11 * * 5'
   workflow_dispatch:
     inputs:
       bump:
