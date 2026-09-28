@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-# After release/<VERSION> lands on the production branch: tag vVERSION, publish the GitHub
-# Release, open and merge the backport PR to the development branch (left open on conflict),
-# delete the release branch and, optionally, start a deploy workflow.
-#
-# Runs inside a checkout of the production branch (fetch-depth: 0).
-# Env: VERSION, DEVELOPMENT_BRANCH, PRODUCTION_BRANCH, DEPLOY_WORKFLOW (optional), GH_TOKEN.
+# Tag, GitHub Release, backport PR and optional deploy after a release lands.
+# Env: VERSION, DEVELOPMENT_BRANCH, PRODUCTION_BRANCH, DEPLOY_WORKFLOW, GH_TOKEN.
 set -euo pipefail
 
 VERSION="${VERSION#release/}"

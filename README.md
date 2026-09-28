@@ -37,6 +37,9 @@ Ready-to-copy callers live in [`templates/`](./templates).
 `coverage-summary: coverage/coverage-summary.json`. The PR comment is updated in place on every
 push; grant `pull-requests: write` in the caller.
 
+**Dependency review** (`security.yml`) needs GitHub Advanced Security on private repositories;
+set `dependency-review: false` there.
+
 ## Weekly releases (gitflow)
 
 - **Friday at noon** (Madrid): if the development branch has commits since the last `v*` tag,

@@ -1,18 +1,6 @@
 name: Accessibility
 
-# Reusable accessibility audit: build the site, serve it (a static folder or the project's own
-# server) and audit each path with axe (pa11y-ci + the runner's Chrome). Fails on any violation.
-#
-#   jobs:
-#     a11y:
-#       uses: inzumer/inzumer-ci/.github/workflows/a11y.yml@v1
-#       with:
-#         build-command: npm run build
-#         start-command: npm start          # or static-dir: dist
-#         port: 3000
-#         paths: |
-#           /
-#           /about
+# Reusable axe audit (pa11y-ci) of a built site. Usage: README.
 on:
   workflow_call:
     inputs:

@@ -1,23 +1,6 @@
 name: Node CI
 
-# Reusable CI for Node projects: checkout, pnpm or npm install from the lockfile, an optional
-# dependency audit, the project's own checks (one command per line) and an optional coverage
-# report (job summary, artifact, PR comment and minimum).
-#
-#   jobs:
-#     ci:
-#       uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
-#       with:
-#         audit-level: moderate
-#         commands: |
-#           pnpm typecheck
-#           pnpm lint
-#           pnpm test:coverage
-#           pnpm build
-#         coverage-summary: coverage/coverage-summary.json
-#
-# The job runs with the caller's permissions: grant `pull-requests: write` for the coverage
-# comment (without it the comment is skipped with a warning).
+# Reusable Node CI: install, audit, checks and coverage report. Usage: README.
 on:
   workflow_call:
     inputs:

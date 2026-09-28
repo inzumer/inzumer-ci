@@ -1,24 +1,6 @@
 name: Changesets release
 
-# Reusable release for npm packages with Changesets: with pending changesets it opens or updates
-# the "Version Packages" PR; once that PR is merged it publishes to npm with provenance.
-#
-# Authentication, one of:
-# - Trusted publishing (recommended, no secret): on npmjs.com, package → Settings → Trusted
-#   Publisher → GitHub Actions, with the package repository and the CALLING workflow file
-#   (e.g. release.yml). npm exchanges the job's OIDC token (`id-token: write`) for a
-#   short-lived publish token.
-# - An `NPM_TOKEN` secret (granular token with publish rights), passed with `secrets: inherit`.
-#
-#   on:
-#     push:
-#       branches: [main]
-#   jobs:
-#     release:
-#       uses: inzumer/inzumer-ci/.github/workflows/changesets-release.yml@v1
-#       with:
-#         check: pnpm check
-#       secrets: inherit   # only needed with an NPM_TOKEN
+# Reusable Changesets release: "Version Packages" PR, then npm publish. Usage: README.
 on:
   workflow_call:
     inputs:

@@ -1,19 +1,6 @@
 name: Release finish
 
-# Reusable: when someone merges a release/* PR into the production branch by hand, tag it, publish
-# the GitHub Release and backport it to the development branch (the push already deploys).
-#
-#   on:
-#     pull_request:
-#       types: [closed]
-#       branches: [main]
-#   jobs:
-#     finish:
-#       if: github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/')
-#       uses: inzumer/inzumer-ci/.github/workflows/release-finish.yml@v1
-#       with:
-#         version: ${{ github.event.pull_request.head.ref }}
-#         development-branch: develop
+# Tag, GitHub Release and backport after a release/* PR merged by hand. Usage: README.
 on:
   workflow_call:
     inputs:
