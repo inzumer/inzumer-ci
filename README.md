@@ -17,7 +17,7 @@ Ready-to-copy callers live in [`templates/`](./templates).
 | `node-ci.yml`            | Checkout, install (pnpm or npm), optional **dependency audit**, your checks, and an optional **coverage report** (job summary, artifact, PR comment, minimum) | `templates/workflows/ci.yml`              |
 | `security.yml`           | **Dependency analysis**: `audit` at a level (also on a schedule) and GitHub's dependency review on PRs                                                        | `templates/workflows/security.yml`        |
 | `a11y.yml`               | **Accessibility**: build, serve (static folder or own server) and audit each page with axe (pa11y-ci)                                                         | `templates/workflows/a11y.yml`            |
-| `changesets-release.yml` | npm packages: "Version Packages" PR, then publish with provenance (`NPM_TOKEN` secret)                                                                        | `templates/workflows/package-release.yml` |
+| `changesets-release.yml` | npm packages: "Version Packages" PR, then publish with provenance (trusted publishing or `NPM_TOKEN`)                                                         | `templates/workflows/package-release.yml` |
 | `release-prepare.yml`    | Weekly gitflow release, step 1: cut `release/X.Y.Z` and open the PR (or close stale ones)                                                                     | `templates/workflows/release-prepare.yml` |
 | `release-find.yml`       | Step 2: find the open release PR at the local hour                                                                                                            | `templates/workflows/release-publish.yml` |
 | `release-merge.yml`      | Step 3: merge, tag, GitHub Release, backport to the development branch, optional deploy                                                                       | `templates/workflows/release-publish.yml` |
@@ -60,6 +60,22 @@ and "Allow GitHub Actions to create and approve pull requests"; Settings → Gen
 Dependabot's configuration can't be shared across repositories, so each one keeps its own
 `.github/dependabot.yml`. Copy [`templates/dependabot.yml`](./templates/dependabot.yml): npm and
 GitHub Actions on the **1st and 15th of each month**, minor and patch updates grouped.
+
+## Publishing to npm
+
+`changesets-release.yml` publishes with npm **trusted publishing**: no secret to store or rotate.
+For each package, once it exists on npm (the first version is published by hand), open
+npmjs.com → the package → **Settings → Trusted Publisher → GitHub Actions** and fill in:
+
+| Field             | Value                                                     |
+| ----------------- | --------------------------------------------------------- |
+| Organization/user | `inzumer`                                                 |
+| Repository        | the package repository, e.g. `inzumer-tokens`             |
+| Workflow filename | the **calling** workflow in that repo, e.g. `release.yml` |
+| Environment       | empty                                                     |
+
+The caller grants `id-token: write`. An `NPM_TOKEN` secret (with `secrets: inherit`) still
+works for repositories without trusted publishing.
 
 ## Versioning
 
