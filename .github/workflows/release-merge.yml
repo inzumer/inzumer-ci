@@ -1,10 +1,6 @@
 name: Release merge
 
-# Reusable, step 3 of the weekly gitflow release: merge release/<version> into the production
-# branch, then tag, publish the GitHub Release, backport to the development branch and start the
-# deploy workflow if given (merges made with GITHUB_TOKEN don't trigger other workflows).
-# Skipped when the repository variable RELEASE_AUTO_MERGE is 'false' (then merge by hand and
-# release-finish.yml does the rest).
+# Weekly release, step 3: merge, tag, backport and deploy. Usage: README.
 on:
   workflow_call:
     inputs:

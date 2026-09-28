@@ -1,17 +1,6 @@
 name: Changesets release
 
-# Reusable release for npm packages with Changesets: with pending changesets it opens or updates
-# the "Version Packages" PR; once that PR is merged it publishes to npm with provenance.
-#
-#   on:
-#     push:
-#       branches: [main]
-#   jobs:
-#     release:
-#       uses: inzumer/inzumer-ci/.github/workflows/changesets-release.yml@v1
-#       with:
-#         check: pnpm check
-#       secrets: inherit   # NPM_TOKEN
+# Reusable Changesets release: "Version Packages" PR, then npm publish. Usage: README.
 on:
   workflow_call:
     inputs:
@@ -29,7 +18,8 @@ on:
         default: pnpm changeset publish
     secrets:
       NPM_TOKEN:
-        required: true
+        description: Only without trusted publishing.
+        required: false
 
 permissions:
   contents: write
@@ -53,6 +43,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
           registry-url: https://registry.npmjs.org
+      - name: npm with trusted publishing
+        # OIDC publishing needs npm 11.5.1 or later (pnpm 9 publishes through npm).
+        run: |
+          lowest=$(printf '11.5.1 %s' "$(npm --version)" | tr ' ' '\n' | sort -V | head -1)
+          [ "$lowest" = 11.5.1 ] || npm install -g npm@11
+          npm --version
       - run: pnpm install --frozen-lockfile
       - name: Check
         if: inputs.check != ''

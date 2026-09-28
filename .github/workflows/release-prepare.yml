@@ -1,29 +1,6 @@
 name: Release prepare
 
-# Reusable, step 1 of the weekly gitflow release. If the development branch has changes since the
-# last v* tag, cut release/X.Y.Z (version from Conventional Commits), bump package.json and open
-# the PR to the production branch; with no changes, close stale release PRs. The caller then runs
-# its own CI on `release/<version>`.
-#
-#   on:
-#     schedule:                 # noon in Madrid: 10:00 UTC in summer, 11:00 UTC in winter
-#       - cron: '0 10 * * 5'
-#       - cron: '0 11 * * 5'
-#     workflow_dispatch:
-#       inputs:
-#         bump: { type: choice, options: [auto, patch, minor, major], default: auto }
-#   jobs:
-#     prepare:
-#       uses: inzumer/inzumer-ci/.github/workflows/release-prepare.yml@v1
-#       with:
-#         development-branch: develop
-#         bump: ${{ inputs.bump || 'auto' }}
-#     validate:
-#       needs: prepare
-#       if: needs.prepare.outputs.version != ''
-#       uses: ./.github/workflows/ci.yml
-#       with:
-#         ref: release/${{ needs.prepare.outputs.version }}
+# Weekly release, step 1: cut release/X.Y.Z or close stale release PRs. Usage: README.
 on:
   workflow_call:
     inputs:

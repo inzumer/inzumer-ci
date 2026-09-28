@@ -1,22 +1,6 @@
 name: Security
 
-# Reusable dependency analysis:
-# - `audit`: `<package-manager> audit` failing at `audit-level`. Run it on a schedule too: new
-#   advisories appear without any code change.
-# - `dependency-review`: on pull requests, GitHub's dependency review fails when a change adds a
-#   dependency with a known vulnerability at or above `fail-on-severity`. Private repositories need
-#   GitHub Advanced Security for it; set `dependency-review: false` there.
-#
-#   on:
-#     pull_request:
-#       branches: [main, develop]
-#     schedule:
-#       - cron: '0 6 * * 1'   # weekly
-#   jobs:
-#     security:
-#       uses: inzumer/inzumer-ci/.github/workflows/security.yml@v1
-#       with:
-#         audit-level: high
+# Reusable dependency audit and PR dependency review. Usage: README.
 on:
   workflow_call:
     inputs:

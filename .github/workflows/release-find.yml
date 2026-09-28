@@ -1,22 +1,6 @@
 name: Release find
 
-# Reusable, step 2 of the weekly gitflow release: at the local hour, find the open release/* PR to
-# the production branch. The caller runs its CI on it and then calls release-merge.yml.
-#
-#   jobs:
-#     find:
-#       uses: inzumer/inzumer-ci/.github/workflows/release-find.yml@v1
-#     validate:
-#       needs: find
-#       if: needs.find.outputs.version != ''
-#       uses: ./.github/workflows/ci.yml
-#       with:
-#         ref: release/${{ needs.find.outputs.version }}
-#     merge:
-#       needs: [find, validate]
-#       uses: inzumer/inzumer-ci/.github/workflows/release-merge.yml@v1
-#       with:
-#         version: ${{ needs.find.outputs.version }}
+# Weekly release, step 2: find the open release/* PR. Usage: README.
 on:
   workflow_call:
     inputs:

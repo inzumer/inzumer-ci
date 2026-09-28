@@ -15,4 +15,5 @@ jobs:
     uses: inzumer/inzumer-ci/.github/workflows/changesets-release.yml@v1
     with:
       check: pnpm check
+    # Only with an NPM_TOKEN secret; trusted publishing on npmjs.com needs none.
     secrets: inherit
