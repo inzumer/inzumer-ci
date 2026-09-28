@@ -38,3 +38,12 @@ jobs:
       paths: |
         /
         /about
+
+  duplication:
+    uses: ./.github/workflows/duplication.yml
+    permissions:
+      contents: read
+      pull-requests: write
+    with:
+      paths: scripts
+      ci-ref: ${{ github.head_ref || github.ref_name }}
