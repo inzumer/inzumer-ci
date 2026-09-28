@@ -1,0 +1,18 @@
+name: Release
+
+# npm packages (inzumer-*): Changesets "Version Packages" PR, then publish.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    uses: inzumer/inzumer-ci/.github/workflows/changesets-release.yml@v1
+    with:
+      check: pnpm check
+    secrets: inherit

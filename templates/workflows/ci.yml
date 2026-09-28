@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  # The weekly release runs this same CI on its release branch.
+  workflow_call:
+    inputs:
+      ref:
+        type: string
+        required: true
+
+jobs:
+  ci:
+    uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
+    with:
+      ref: ${{ inputs.ref || github.ref }}
+      package-manager: pnpm
+      commands: |
+        pnpm typecheck
+        pnpm lint
+        pnpm test:coverage
+        pnpm build

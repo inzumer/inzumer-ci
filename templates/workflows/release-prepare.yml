@@ -1,0 +1,36 @@
+name: Release prepare
+
+# Fridays at noon (Madrid): cut the release PR and run CI on it.
+on:
+  schedule:
+    - cron: "0 10 * * 5"
+    - cron: "0 11 * * 5"
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump (auto = from Conventional Commits)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    uses: inzumer/inzumer-ci/.github/workflows/release-prepare.yml@v1
+    with:
+      development-branch: develop
+      bump: ${{ inputs.bump || 'auto' }}
+
+  validate:
+    needs: prepare
+    if: needs.prepare.outputs.version != ''
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: release/${{ needs.prepare.outputs.version }}

@@ -1,0 +1,19 @@
+name: Release finish
+
+# A release PR merged by hand: tag, GitHub Release and backport.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  finish:
+    if: github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/')
+    uses: inzumer/inzumer-ci/.github/workflows/release-finish.yml@v1
+    with:
+      version: ${{ github.event.pull_request.head.ref }}
+      development-branch: develop

@@ -1,0 +1,36 @@
+name: Release publish
+
+# Mondays at noon (Madrid): run CI again on the release PR, merge it, tag, backport and deploy.
+on:
+  schedule:
+    - cron: "0 10 * * 1"
+    - cron: "0 11 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  find:
+    uses: inzumer/inzumer-ci/.github/workflows/release-find.yml@v1
+
+  validate:
+    needs: find
+    if: needs.find.outputs.version != ''
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: release/${{ needs.find.outputs.version }}
+
+  merge:
+    needs: [find, validate]
+    uses: inzumer/inzumer-ci/.github/workflows/release-merge.yml@v1
+    with:
+      version: ${{ needs.find.outputs.version }}
+      development-branch: develop
+      # deploy-workflow: pages.yml   # only if the deploy is a workflow in this repository

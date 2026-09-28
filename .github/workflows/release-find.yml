@@ -1,0 +1,72 @@
+name: Release find
+
+# Reusable, step 2 of the weekly gitflow release: at the local hour, find the open release/* PR to
+# the production branch. The caller runs its CI on it and then calls release-merge.yml.
+#
+#   jobs:
+#     find:
+#       uses: inzumer/inzumer-ci/.github/workflows/release-find.yml@v1
+#     validate:
+#       needs: find
+#       if: needs.find.outputs.version != ''
+#       uses: ./.github/workflows/ci.yml
+#       with:
+#         ref: release/${{ needs.find.outputs.version }}
+#     merge:
+#       needs: [find, validate]
+#       uses: inzumer/inzumer-ci/.github/workflows/release-merge.yml@v1
+#       with:
+#         version: ${{ needs.find.outputs.version }}
+on:
+  workflow_call:
+    inputs:
+      production-branch:
+        type: string
+        default: main
+      time-zone:
+        type: string
+        default: Europe/Madrid
+      local-hour:
+        type: number
+        default: 12
+      ci-ref:
+        type: string
+        default: v1
+    outputs:
+      version:
+        description: Version of the open release PR, empty when there is none.
+        value: ${{ jobs.find.outputs.version }}
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      version: ${{ steps.find.outputs.version }}
+    steps:
+      - name: Checkout inzumer-ci scripts
+        uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - name: Only at the local hour
+        id: gate
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          LOCAL_HOUR: ${{ inputs.local-hour }}
+          TIME_ZONE: ${{ inputs.time-zone }}
+        run: node .inzumer-ci/scripts/schedule-gate.mjs
+
+      - name: Find the release PR
+        id: find
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          branch=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base "${{ inputs.production-branch }}" \
+            --json headRefName --jq '[.[] | select(.headRefName | startswith("release/"))][0].headRefName // ""')
+          echo "version=${branch#release/}" >> "$GITHUB_OUTPUT"

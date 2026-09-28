@@ -1,0 +1,63 @@
+name: Release merge
+
+# Reusable, step 3 of the weekly gitflow release: merge release/<version> into the production
+# branch, then tag, publish the GitHub Release, backport to the development branch and start the
+# deploy workflow if given (merges made with GITHUB_TOKEN don't trigger other workflows).
+# Skipped when the repository variable RELEASE_AUTO_MERGE is 'false' (then merge by hand and
+# release-finish.yml does the rest).
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
+      development-branch:
+        type: string
+        default: develop
+      production-branch:
+        type: string
+        default: main
+      deploy-workflow:
+        description: Workflow file to dispatch on the production branch after merging (e.g. pages.yml).
+        type: string
+        default: ""
+      ci-ref:
+        type: string
+        default: v1
+
+jobs:
+  merge:
+    if: inputs.version != '' && vars.RELEASE_AUTO_MERGE != 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Merge the release PR
+        run: |
+          gh pr merge "release/${{ inputs.version }}" --repo "$GITHUB_REPOSITORY" \
+            --merge --subject "Merge branch 'release/${{ inputs.version }}'"
+
+      - name: Checkout ${{ inputs.production-branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.production-branch }}
+          fetch-depth: 0
+
+      - name: Checkout inzumer-ci scripts
+        uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - name: Tag, release, backport and deploy
+        env:
+          VERSION: ${{ inputs.version }}
+          DEVELOPMENT_BRANCH: ${{ inputs.development-branch }}
+          PRODUCTION_BRANCH: ${{ inputs.production-branch }}
+          DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
+        run: bash .inzumer-ci/scripts/release-finish.sh

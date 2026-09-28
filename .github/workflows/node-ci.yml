@@ -1,0 +1,69 @@
+name: Node CI
+
+# Reusable CI for Node projects: checkout, pnpm or npm install from the lockfile, then the
+# project's own checks, one command per line.
+#
+#   jobs:
+#     ci:
+#       uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
+#       with:
+#         commands: |
+#           pnpm typecheck
+#           pnpm lint
+#           pnpm test:coverage
+#           pnpm build
+on:
+  workflow_call:
+    inputs:
+      commands:
+        description: Commands to run after installing, one per line.
+        type: string
+        required: true
+      package-manager:
+        description: pnpm or npm.
+        type: string
+        default: pnpm
+      ref:
+        description: Git ref to check out (defaults to the triggering ref).
+        type: string
+        default: ""
+      node-version-file:
+        type: string
+        default: .nvmrc
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Setup pnpm
+        if: inputs.package-manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+          cache: ${{ inputs.package-manager }}
+
+      - name: Install dependencies
+        run: ${{ inputs.package-manager == 'pnpm' && 'pnpm install --frozen-lockfile' || 'npm ci' }}
+
+      - name: Checks
+        env:
+          COMMANDS: ${{ inputs.commands }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r command; do
+            [ -z "$command" ] && continue
+            echo "::group::$command"
+            bash -c "$command"
+            echo "::endgroup::"
+          done <<< "$COMMANDS"

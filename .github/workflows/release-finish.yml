@@ -1,0 +1,60 @@
+name: Release finish
+
+# Reusable: when someone merges a release/* PR into the production branch by hand, tag it, publish
+# the GitHub Release and backport it to the development branch (the push already deploys).
+#
+#   on:
+#     pull_request:
+#       types: [closed]
+#       branches: [main]
+#   jobs:
+#     finish:
+#       if: github.event.pull_request.merged && startsWith(github.event.pull_request.head.ref, 'release/')
+#       uses: inzumer/inzumer-ci/.github/workflows/release-finish.yml@v1
+#       with:
+#         version: ${{ github.event.pull_request.head.ref }}
+#         development-branch: develop
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: X.Y.Z or release/X.Y.Z.
+        type: string
+        required: true
+      development-branch:
+        type: string
+        default: develop
+      production-branch:
+        type: string
+        default: main
+      ci-ref:
+        type: string
+        default: v1
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout ${{ inputs.production-branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.production-branch }}
+          fetch-depth: 0
+
+      - name: Checkout inzumer-ci scripts
+        uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - name: Tag, release and backport
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          DEVELOPMENT_BRANCH: ${{ inputs.development-branch }}
+          PRODUCTION_BRANCH: ${{ inputs.production-branch }}
+        run: bash .inzumer-ci/scripts/release-finish.sh

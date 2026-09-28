@@ -1,0 +1,129 @@
+name: Release prepare
+
+# Reusable, step 1 of the weekly gitflow release. If the development branch has changes since the
+# last v* tag, cut release/X.Y.Z (version from Conventional Commits), bump package.json and open
+# the PR to the production branch; with no changes, close stale release PRs. The caller then runs
+# its own CI on `release/<version>`.
+#
+#   on:
+#     schedule:                 # noon in Madrid: 10:00 UTC in summer, 11:00 UTC in winter
+#       - cron: '0 10 * * 5'
+#       - cron: '0 11 * * 5'
+#     workflow_dispatch:
+#       inputs:
+#         bump: { type: choice, options: [auto, patch, minor, major], default: auto }
+#   jobs:
+#     prepare:
+#       uses: inzumer/inzumer-ci/.github/workflows/release-prepare.yml@v1
+#       with:
+#         development-branch: develop
+#         bump: ${{ inputs.bump || 'auto' }}
+#     validate:
+#       needs: prepare
+#       if: needs.prepare.outputs.version != ''
+#       uses: ./.github/workflows/ci.yml
+#       with:
+#         ref: release/${{ needs.prepare.outputs.version }}
+on:
+  workflow_call:
+    inputs:
+      development-branch:
+        type: string
+        default: develop
+      production-branch:
+        type: string
+        default: main
+      bump:
+        description: auto (from Conventional Commits), patch, minor or major.
+        type: string
+        default: auto
+      time-zone:
+        description: Only the scheduled run that falls at `local-hour` here goes on.
+        type: string
+        default: Europe/Madrid
+      local-hour:
+        type: number
+        default: 12
+      ci-ref:
+        description: Ref of inzumer-ci whose scripts are used (keep it equal to the `uses:` ref).
+        type: string
+        default: v1
+    outputs:
+      version:
+        description: The release version, empty when there is nothing to release.
+        value: ${{ jobs.prepare.outputs.version }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      version: ${{ steps.plan.outputs.release == 'true' && steps.plan.outputs.version || '' }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout ${{ inputs.development-branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.development-branch }}
+          fetch-depth: 0
+
+      - name: Checkout inzumer-ci scripts
+        uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Only at the local hour
+        id: gate
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          LOCAL_HOUR: ${{ inputs.local-hour }}
+          TIME_ZONE: ${{ inputs.time-zone }}
+        run: node .inzumer-ci/scripts/schedule-gate.mjs
+
+      - name: Plan
+        id: plan
+        if: steps.gate.outputs.run == 'true'
+        env:
+          RELEASE_REF: origin/${{ inputs.development-branch }}
+          RELEASE_BUMP: ${{ inputs.bump }}
+        run: node .inzumer-ci/scripts/release-plan.mjs
+
+      - name: Close previous release PRs
+        if: steps.gate.outputs.run == 'true'
+        env:
+          COMMENT: "${{ steps.plan.outputs.release == 'true' && 'Replaced by a newer release.' || 'No changes since the last release, closed automatically.' }}"
+        run: |
+          gh pr list --state open --base "${{ inputs.production-branch }}" --json number,headRefName \
+            --jq '.[] | select(.headRefName | startswith("release/")) | .number' |
+          while read -r number; do
+            gh pr close "$number" --delete-branch --comment "$COMMENT"
+          done
+
+      - name: Cut the release branch and open the PR
+        if: steps.plan.outputs.release == 'true'
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          git push origin --delete "release/$VERSION" 2>/dev/null || true
+          git checkout -b "release/$VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          git commit -am "chore(release): $VERSION"
+          git push -u origin "release/$VERSION"
+          {
+            cat release-notes.md
+            printf '\n\n---\nPrepared automatically; merged by the release publish workflow if CI passes.\n'
+          } > pr-body.md
+          gh pr create --base "${{ inputs.production-branch }}" --head "release/$VERSION" \
+            --title "chore(release): $VERSION" --body-file pr-body.md
