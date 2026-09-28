@@ -16,6 +16,7 @@ Ready-to-copy callers live in [`templates/`](./templates).
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
 | `node-ci.yml`            | Checkout, install (pnpm or npm), optional **dependency audit**, your checks, and an optional **coverage report** (job summary, artifact, PR comment, minimum) | `templates/workflows/ci.yml`              |
 | `security.yml`           | **Dependency analysis**: `audit` at a level (also on a schedule) and GitHub's dependency review on PRs                                                        | `templates/workflows/security.yml`        |
+| `duplication.yml`        | **Duplicated code** (jscpd): warnings on the repeated lines and a PR comment with where to extract each block; only warns unless `fail-on-clones`             | `templates/workflows/duplication.yml`     |
 | `a11y.yml`               | **Accessibility**: build, serve (static folder or own server) and audit each page with axe (pa11y-ci)                                                         | `templates/workflows/a11y.yml`            |
 | `changesets-release.yml` | npm packages: "Version Packages" PR, then publish with provenance (trusted publishing or `NPM_TOKEN`)                                                         | `templates/workflows/package-release.yml` |
 | `release-prepare.yml`    | Weekly gitflow release, step 1: cut `release/X.Y.Z` and open the PR (or close stale ones)                                                                     | `templates/workflows/release-prepare.yml` |
@@ -25,12 +26,13 @@ Ready-to-copy callers live in [`templates/`](./templates).
 
 ## Shared practices
 
-| Practice            | How                                                                                                           |
-| ------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Version bumps       | Weekly gitflow release (apps) or Changesets (packages); the version comes from Conventional Commits           |
-| Dependency analysis | `node-ci` `audit-level` on every run, `security.yml` weekly and on PRs, Dependabot on the 1st and 15th        |
-| Coverage            | Each repo keeps its thresholds in Vitest or Jest; `node-ci` `coverage-summary` reports it on every run and PR |
-| Accessibility       | `a11y.yml` (axe on the main pages); Milimon keeps its full-site audit and `ui-library` Storybook's addon      |
+| Practice            | How                                                                                                              |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Version bumps       | Weekly gitflow release (apps) or Changesets (packages); the version comes from Conventional Commits              |
+| Dependency analysis | `node-ci` `audit-level` on every run, `security.yml` weekly and on PRs, Dependabot on the 1st and 15th           |
+| Coverage            | Each repo keeps its thresholds in Vitest or Jest; `node-ci` `coverage-summary` reports it on every run and PR    |
+| Duplicated code     | `duplication.yml` on every PR: repeated blocks become warnings with a suggestion (component, hook, util, layout) |
+| Accessibility       | `a11y.yml` (axe on the main pages); Milimon keeps its full-site audit and `ui-library` Storybook's addon         |
 
 **Coverage report:** add the `json-summary` reporter (Vitest:
 `coverage.reporter: ['text', 'lcov', 'json-summary']`; Jest: `coverageReporters`) and pass

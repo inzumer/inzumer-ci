@@ -1,0 +1,77 @@
+name: Duplicated code
+
+# Reusable jscpd check: warnings on the repeated lines and a PR comment with suggestions. Usage: README.
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Folders to scan, space-separated.
+        type: string
+        default: src
+      ignore:
+        description: Glob patterns to skip, comma-separated.
+        type: string
+        default: '**/*.json,**/*.md,**/node_modules/**,**/dist/**'
+      min-lines:
+        type: number
+        default: 5
+      min-tokens:
+        type: number
+        default: 50
+      fail-on-clones:
+        description: Fail the job when there are repeated blocks (default only warns).
+        type: boolean
+        default: false
+      ci-ref:
+        description: Ref of inzumer-ci whose scripts are used (keep it equal to the `uses:` ref).
+        type: string
+        default: v1
+
+jobs:
+  duplication:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Find repeated code
+        env:
+          PATHS: ${{ inputs.paths }}
+          IGNORE: ${{ inputs.ignore }}
+          MIN_LINES: ${{ inputs.min-lines }}
+          MIN_TOKENS: ${{ inputs.min-tokens }}
+        run: |
+          # shellcheck disable=SC2086
+          npx -y jscpd@4 $PATHS --ignore "$IGNORE,.inzumer-ci/**" --min-lines "$MIN_LINES" \
+            --min-tokens "$MIN_TOKENS" --reporters json --output .jscpd --silent || true
+
+      - name: Report
+        env:
+          JSCPD_REPORT: .jscpd/jscpd-report.json
+          FAIL_ON_CLONES: ${{ inputs.fail-on-clones }}
+        run: node .inzumer-ci/scripts/duplication-report.mjs
+
+      - name: Comment on the PR
+        if: github.event_name == 'pull_request' && !cancelled()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          [ -f duplication-comment.md ] || exit 0
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- inzumer-ci:duplication -->"))][0].id // empty')
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@duplication-comment.md >/dev/null
+          elif grep -q '| Suggestion |' duplication-comment.md; then
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@duplication-comment.md >/dev/null
+          fi || echo "::warning::Could not comment on the PR (grant pull-requests: write to the caller)."
