@@ -1,0 +1,22 @@
+name: Accessibility
+
+# axe audit of the main pages on every PR.
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  a11y:
+    uses: inzumer/inzumer-ci/.github/workflows/a11y.yml@v1
+    with:
+      package-manager: npm
+      build-command: npm run build
+      # Next.js / servers: start-command + port. Static sites: static-dir: dist
+      start-command: npm start
+      port: 3000
+      paths: |
+        /

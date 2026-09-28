@@ -1,17 +1,23 @@
 name: Node CI
 
-# Reusable CI for Node projects: checkout, pnpm or npm install from the lockfile, then the
-# project's own checks, one command per line.
+# Reusable CI for Node projects: checkout, pnpm or npm install from the lockfile, an optional
+# dependency audit, the project's own checks (one command per line) and an optional coverage
+# report (job summary, artifact, PR comment and minimum).
 #
 #   jobs:
 #     ci:
 #       uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
 #       with:
+#         audit-level: moderate
 #         commands: |
 #           pnpm typecheck
 #           pnpm lint
 #           pnpm test:coverage
 #           pnpm build
+#         coverage-summary: coverage/coverage-summary.json
+#
+# The job runs with the caller's permissions: grant `pull-requests: write` for the coverage
+# comment (without it the comment is skipped with a warning).
 on:
   workflow_call:
     inputs:
@@ -30,9 +36,22 @@ on:
       node-version-file:
         type: string
         default: .nvmrc
-
-permissions:
-  contents: read
+      audit-level:
+        description: Run `<package-manager> audit` failing at this level (low, moderate, high, critical); empty to skip.
+        type: string
+        default: ''
+      coverage-summary:
+        description: Path of a json-summary coverage report written by the commands; empty to skip the report.
+        type: string
+        default: ''
+      min-line-coverage:
+        description: Fail when line coverage is under this percentage (0 = no minimum here).
+        type: number
+        default: 0
+      ci-ref:
+        description: Ref of inzumer-ci whose scripts are used (keep it equal to the `uses:` ref).
+        type: string
+        default: v1
 
 jobs:
   ci:
@@ -56,6 +75,10 @@ jobs:
       - name: Install dependencies
         run: ${{ inputs.package-manager == 'pnpm' && 'pnpm install --frozen-lockfile' || 'npm ci' }}
 
+      - name: Audit dependencies
+        if: inputs.audit-level != ''
+        run: ${{ inputs.package-manager }} audit --audit-level=${{ inputs.audit-level }}
+
       - name: Checks
         env:
           COMMANDS: ${{ inputs.commands }}
@@ -67,3 +90,44 @@ jobs:
             bash -c "$command"
             echo "::endgroup::"
           done <<< "$COMMANDS"
+
+      - name: Checkout inzumer-ci scripts
+        if: inputs.coverage-summary != '' && !cancelled()
+        uses: actions/checkout@v4
+        with:
+          repository: inzumer/inzumer-ci
+          ref: ${{ inputs.ci-ref }}
+          path: .inzumer-ci
+
+      - name: Coverage report
+        id: coverage
+        if: inputs.coverage-summary != '' && !cancelled()
+        env:
+          COVERAGE_SUMMARY: ${{ inputs.coverage-summary }}
+          MIN_LINE_COVERAGE: ${{ inputs.min-line-coverage }}
+        run: node .inzumer-ci/scripts/coverage-report.mjs
+
+      - name: Upload the coverage report
+        if: inputs.coverage-summary != '' && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Comment coverage on the PR
+        if: inputs.coverage-summary != '' && github.event_name == 'pull_request' && !cancelled()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          [ -f coverage-comment.md ] || exit 0
+          id=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- inzumer-ci:coverage -->"))][0].id // empty')
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" -F body=@coverage-comment.md >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -F body=@coverage-comment.md >/dev/null
+          fi || echo "::warning::Could not comment the coverage (grant pull-requests: write to the caller)."

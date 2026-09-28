@@ -1,0 +1,63 @@
+name: Security
+
+# Reusable dependency analysis:
+# - `audit`: `<package-manager> audit` failing at `audit-level`. Run it on a schedule too: new
+#   advisories appear without any code change.
+# - `dependency-review`: on pull requests, GitHub's dependency review fails when a change adds a
+#   dependency with a known vulnerability at or above `fail-on-severity`. Private repositories need
+#   GitHub Advanced Security for it; set `dependency-review: false` there.
+#
+#   on:
+#     pull_request:
+#       branches: [main, develop]
+#     schedule:
+#       - cron: '0 6 * * 1'   # weekly
+#   jobs:
+#     security:
+#       uses: inzumer/inzumer-ci/.github/workflows/security.yml@v1
+#       with:
+#         audit-level: high
+on:
+  workflow_call:
+    inputs:
+      package-manager:
+        description: pnpm or npm.
+        type: string
+        default: pnpm
+      audit-level:
+        description: low, moderate, high or critical.
+        type: string
+        default: high
+      dependency-review:
+        type: boolean
+        default: true
+      fail-on-severity:
+        description: Dependency review threshold (low, moderate, high or critical).
+        type: string
+        default: moderate
+      node-version-file:
+        type: string
+        default: .nvmrc
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup pnpm
+        if: inputs.package-manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+      - name: Audit dependencies
+        run: ${{ inputs.package-manager }} audit --audit-level=${{ inputs.audit-level }}
+
+  dependency-review:
+    if: inputs.dependency-review && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: ${{ inputs.fail-on-severity }}
