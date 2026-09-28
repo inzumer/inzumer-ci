@@ -1,0 +1,115 @@
+name: Accessibility
+
+# Reusable accessibility audit: build the site, serve it (a static folder or the project's own
+# server) and audit each path with axe (pa11y-ci + the runner's Chrome). Fails on any violation.
+#
+#   jobs:
+#     a11y:
+#       uses: inzumer/inzumer-ci/.github/workflows/a11y.yml@v1
+#       with:
+#         build-command: npm run build
+#         start-command: npm start          # or static-dir: dist
+#         port: 3000
+#         paths: |
+#           /
+#           /about
+on:
+  workflow_call:
+    inputs:
+      paths:
+        description: Paths to audit, one per line (e.g. / and /es/about).
+        type: string
+        default: /
+      package-manager:
+        description: pnpm or npm (empty to skip installing, e.g. for a plain static folder).
+        type: string
+        default: pnpm
+      build-command:
+        type: string
+        default: ''
+      static-dir:
+        description: Folder to serve as a static site (e.g. dist). Use this or start-command.
+        type: string
+        default: ''
+      start-command:
+        description: Command that starts the site's own server (e.g. npm start).
+        type: string
+        default: ''
+      port:
+        type: number
+        default: 4173
+      ignore:
+        description: axe rule ids to skip, comma-separated (prefer fixing them).
+        type: string
+        default: ''
+      node-version-file:
+        type: string
+        default: .nvmrc
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        if: inputs.package-manager == 'pnpm'
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ${{ inputs.node-version-file }}
+
+      - name: Install dependencies
+        if: inputs.package-manager != ''
+        run: ${{ inputs.package-manager == 'pnpm' && 'pnpm install --frozen-lockfile' || 'npm ci' }}
+
+      - name: Build
+        if: inputs.build-command != ''
+        run: ${{ inputs.build-command }}
+
+      - name: Start the site
+        env:
+          STATIC_DIR: ${{ inputs.static-dir }}
+          START_COMMAND: ${{ inputs.start-command }}
+          PORT: ${{ inputs.port }}
+        run: |
+          if [ -n "$STATIC_DIR" ]; then
+            nohup npx -y serve@14 "$STATIC_DIR" -l "$PORT" > site.log 2>&1 &
+          else
+            nohup bash -c "$START_COMMAND" > site.log 2>&1 &
+          fi
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null "http://localhost:$PORT/" && exit 0
+            sleep 2
+          done
+          cat site.log
+          echo "::error::The site did not answer on port $PORT"
+          exit 1
+
+      - name: Audit with axe
+        env:
+          PATHS: ${{ inputs.paths }}
+          PORT: ${{ inputs.port }}
+          IGNORE: ${{ inputs.ignore }}
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
+        run: |
+          node -e '
+            const paths = process.env.PATHS.split("\n").map((p) => p.trim()).filter(Boolean);
+            const ignore = process.env.IGNORE.split(",").map((r) => r.trim()).filter(Boolean);
+            const config = {
+              defaults: {
+                runners: ["axe"],
+                timeout: 60000,
+                ignore,
+                chromeLaunchConfig: {
+                  executablePath: "/usr/bin/google-chrome",
+                  args: ["--no-sandbox", "--disable-dev-shm-usage"],
+                },
+              },
+              urls: paths.map((p) => `http://localhost:${process.env.PORT}${p.startsWith("/") ? p : `/${p}`}`),
+            };
+            require("fs").writeFileSync(".pa11yci.json", JSON.stringify(config, null, 2));
+          '
+          cat .pa11yci.json
+          npx -y pa11y-ci@3 --config .pa11yci.json

@@ -12,12 +12,20 @@ on:
         type: string
         required: true
 
+permissions:
+  contents: read
+  # For the coverage comment on PRs.
+  pull-requests: write
+
 jobs:
   ci:
     uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
     with:
       ref: ${{ inputs.ref || github.ref }}
       package-manager: pnpm
+      audit-level: moderate
+      # Needs the json-summary coverage reporter (Vitest: coverage.reporter; Jest: coverageReporters).
+      coverage-summary: coverage/coverage-summary.json
       commands: |
         pnpm typecheck
         pnpm lint

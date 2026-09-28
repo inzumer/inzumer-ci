@@ -28,3 +28,13 @@ jobs:
           for f in .github/workflows/*.yml templates/workflows/*.yml; do
             npx -y @action-validator/cli "$f"
           done
+
+  # Self-test: the reusable accessibility audit must pass on the fixture site.
+  a11y:
+    uses: ./.github/workflows/a11y.yml
+    with:
+      package-manager: ''
+      static-dir: test/fixtures/a11y-site
+      paths: |
+        /
+        /about

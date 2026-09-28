@@ -1,0 +1,21 @@
+name: Security
+
+# Dependency analysis: audit on every PR and every Monday (new advisories appear without code
+# changes), plus GitHub's dependency review on PRs.
+on:
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  security:
+    uses: inzumer/inzumer-ci/.github/workflows/security.yml@v1
+    with:
+      audit-level: high
+      # Private repositories without GitHub Advanced Security:
+      # dependency-review: false
