@@ -88,6 +88,11 @@ Tags `vX.Y.Z` plus a moving major tag (`v1`). Breaking changes to inputs or beha
 major (`v2`), so callers upgrade on purpose. Keep the `ci-ref` input equal to the ref in `uses:`
 (both default to `v1`).
 
+**v2** only changes `changesets-release.yml`: it runs `changesets/action` v2, which needs the
+**Changesets CLI v3** (`@changesets/cli` ^3, Node ^22.11 or ^24; the `prettier` option of
+`.changeset/config.json` became `format`). Packages still on CLI v2 keep
+`changesets-release.yml@v1`; the other workflows are the same in both.
+
 ## Development
 
 `node --test "scripts/*.test.mjs"` tests the scripts; CI also validates every workflow and
