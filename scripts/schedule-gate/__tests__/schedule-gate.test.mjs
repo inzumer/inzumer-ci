@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { shouldRun, utcHourFor } from './schedule-gate.mjs';
+import { shouldRun, utcHourFor } from '../schedule-gate.mjs';
 
 const SUMMER = new Date('2026-07-03T08:00:00Z');
 const WINTER = new Date('2026-12-04T08:00:00Z');

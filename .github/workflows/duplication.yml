@@ -58,7 +58,7 @@ jobs:
         env:
           JSCPD_REPORT: .jscpd/jscpd-report.json
           FAIL_ON_CLONES: ${{ inputs.fail-on-clones }}
-        run: node .inzumer-ci/scripts/duplication-report.mjs
+        run: node .inzumer-ci/scripts/duplication-report/duplication-report.mjs
 
       - name: Comment on the PR
         if: github.event_name == 'pull_request' && !cancelled()

@@ -56,4 +56,4 @@ jobs:
           DEVELOPMENT_BRANCH: ${{ inputs.development-branch }}
           PRODUCTION_BRANCH: ${{ inputs.production-branch }}
           DEPLOY_WORKFLOW: ${{ inputs.deploy-workflow }}
-        run: bash .inzumer-ci/scripts/release-finish.sh
+        run: bash .inzumer-ci/scripts/release-finish/release-finish.sh

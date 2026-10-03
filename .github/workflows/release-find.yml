@@ -43,7 +43,7 @@ jobs:
           SCHEDULE: ${{ github.event.schedule }}
           LOCAL_HOUR: ${{ inputs.local-hour }}
           TIME_ZONE: ${{ inputs.time-zone }}
-        run: node .inzumer-ci/scripts/schedule-gate.mjs
+        run: node .inzumer-ci/scripts/schedule-gate/schedule-gate.mjs
 
       - name: Find the release PR
         id: find

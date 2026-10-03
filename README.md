@@ -52,7 +52,7 @@ set `dependency-review: false` there.
   to the development branch (merged at once; left open on conflict). If the deploy is a workflow in
   the repository (e.g. GitHub Pages), pass it as `deploy-workflow`.
 - GitHub schedules are UTC only: callers declare two crons (summer and winter) and
-  `scripts/schedule-gate.mjs` keeps the one at the local hour (`time-zone`, `local-hour` inputs).
+  `scripts/schedule-gate/schedule-gate.mjs` keeps the one at the local hour (`time-zone`, `local-hour` inputs).
 - The development branch is an input (`develop` by default; Milimon uses `dev`).
 - Set the repository variable `RELEASE_AUTO_MERGE=false` to merge release PRs by hand.
 
@@ -95,5 +95,5 @@ major (`v2`), so callers upgrade on purpose. Keep the `ci-ref` input equal to th
 
 ## Development
 
-`node --test "scripts/*.test.mjs"` tests the scripts; CI also validates every workflow and
+`node --test "scripts/**/__tests__/*.test.mjs"` tests the scripts; CI also validates every workflow and
 template against the GitHub Actions schema.

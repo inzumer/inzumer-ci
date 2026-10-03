@@ -20,9 +20,9 @@ jobs:
       - name: Format
         run: npx -y prettier@3 --check "**/*.{md,yml,mjs,json}"
       - name: Script tests
-        run: node --test "scripts/*.test.mjs"
+        run: node --test "scripts/**/__tests__/*.test.mjs"
       - name: Shell scripts
-        run: bash -n scripts/release-finish.sh
+        run: bash -n scripts/release-finish/release-finish.sh
       - name: Workflows and templates match the GitHub Actions schema
         run: |
           for f in .github/workflows/*.yml templates/workflows/*.yml; do
