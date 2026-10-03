@@ -1,6 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { bumpFor, nextVersion, releaseNotes, relevantCommits, versionOf } from './release-plan.mjs';
+import {
+  bumpFor,
+  nextVersion,
+  releaseNotes,
+  relevantCommits,
+  versionOf,
+} from '../release-plan.mjs';
 
 const commit = (subject, body = '') => ({ subject, body });
 

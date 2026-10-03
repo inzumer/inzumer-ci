@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { annotations, duplicationMarkdown, MARKER, suggestionFor } from './duplication-report.mjs';
+import { annotations, duplicationMarkdown, MARKER, suggestionFor } from '../duplication-report.mjs';
 
 const report = {
   statistics: { total: { duplicatedLines: 22, percentage: 0.4 } },

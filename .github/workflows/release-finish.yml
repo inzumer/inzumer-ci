@@ -44,4 +44,4 @@ jobs:
           VERSION: ${{ inputs.version }}
           DEVELOPMENT_BRANCH: ${{ inputs.development-branch }}
           PRODUCTION_BRANCH: ${{ inputs.production-branch }}
-        run: bash .inzumer-ci/scripts/release-finish.sh
+        run: bash .inzumer-ci/scripts/release-finish/release-finish.sh

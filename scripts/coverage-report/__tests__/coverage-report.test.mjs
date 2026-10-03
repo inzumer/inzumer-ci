@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { coverageTable, MARKER, meetsMinimum } from './coverage-report.mjs';
+import { coverageTable, MARKER, meetsMinimum } from '../coverage-report.mjs';
 
 const summary = {
   total: {
