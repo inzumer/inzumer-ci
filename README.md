@@ -26,13 +26,13 @@ Ready-to-copy callers live in [`templates/`](./templates).
 
 ## Shared practices
 
-| Practice            | How                                                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Version bumps       | Weekly gitflow release (apps) or Changesets (packages); the version comes from Conventional Commits              |
-| Dependency analysis | `node-ci` `audit-level` on every run, `security.yml` weekly and on PRs, Dependabot on the 1st and 15th           |
-| Coverage            | Each repo keeps its thresholds in Vitest or Jest; `node-ci` `coverage-summary` reports it on every run and PR    |
-| Duplicated code     | `duplication.yml` on every PR: repeated blocks become warnings with a suggestion (component, hook, util, layout) |
-| Accessibility       | `a11y.yml` (axe on the main pages); Milimon keeps its full-site audit and `ui-library` Storybook's addon         |
+| Practice            | How                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Version bumps       | Weekly gitflow release (apps) or Changesets (packages); the version comes from Conventional Commits                      |
+| Dependency analysis | `node-ci` `audit-level` on every run, `security.yml` weekly and on PRs; dependencies are updated by hand (no Dependabot) |
+| Coverage            | Each repo keeps its thresholds in Vitest or Jest; `node-ci` `coverage-summary` reports it on every run and PR            |
+| Duplicated code     | `duplication.yml` on every PR: repeated blocks become warnings with a suggestion (component, hook, util, layout)         |
+| Accessibility       | `a11y.yml` (axe on the main pages); Milimon keeps its full-site audit and `ui-library` Storybook's addon                 |
 
 **Coverage report:** add the `json-summary` reporter (Vitest:
 `coverage.reporter: ['text', 'lcov', 'json-summary']`; Jest: `coverageReporters`) and pass
@@ -60,11 +60,11 @@ set `dependency-review: false` there.
 and "Allow GitHub Actions to create and approve pull requests"; Settings → General →
 "Automatically delete head branches".
 
-## Dependabot
+## Dependencies
 
-Dependabot's configuration can't be shared across repositories, so each one keeps its own
-`.github/dependabot.yml`. Copy [`templates/dependabot.yml`](./templates/dependabot.yml): npm and
-GitHub Actions on the **1st and 15th of each month**, minor and patch updates grouped.
+Dependencies are updated **by hand**, so no repository keeps a `.github/dependabot.yml` (it only
+leaves automated PRs open). GitHub vulnerability alerts stay on, and `node-ci` with
+`audit-level: low` fails on any vulnerability.
 
 ## Publishing to npm
 
