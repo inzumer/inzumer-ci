@@ -33,6 +33,10 @@ on:
       node-version-file:
         type: string
         default: .nvmrc
+    secrets:
+      private-deps-token:
+        description: Read-only token for private dependencies installed from GitHub (git+https URLs); optional.
+        required: false
 
 jobs:
   a11y:
@@ -50,6 +54,10 @@ jobs:
 
       - name: Install dependencies
         if: inputs.package-manager != ''
+        env:
+          GIT_CONFIG_COUNT: ${{ secrets.private-deps-token && '1' || '0' }}
+          GIT_CONFIG_KEY_0: url.https://x-access-token:${{ secrets.private-deps-token }}@github.com/.insteadOf
+          GIT_CONFIG_VALUE_0: https://github.com/
         run: ${{ inputs.package-manager == 'pnpm' && 'pnpm install --frozen-lockfile' || 'npm ci' }}
 
       - name: Build

@@ -35,6 +35,10 @@ on:
         description: Ref of inzumer-ci whose scripts are used (keep it equal to the `uses:` ref).
         type: string
         default: v1
+    secrets:
+      private-deps-token:
+        description: Read-only token for private dependencies installed from GitHub (git+https URLs); optional.
+        required: false
 
 jobs:
   ci:
@@ -56,6 +60,10 @@ jobs:
           cache: ${{ inputs.package-manager }}
 
       - name: Install dependencies
+        env:
+          GIT_CONFIG_COUNT: ${{ secrets.private-deps-token && '1' || '0' }}
+          GIT_CONFIG_KEY_0: url.https://x-access-token:${{ secrets.private-deps-token }}@github.com/.insteadOf
+          GIT_CONFIG_VALUE_0: https://github.com/
         run: ${{ inputs.package-manager == 'pnpm' && 'pnpm install --frozen-lockfile' || 'npm ci' }}
 
       - name: Audit dependencies

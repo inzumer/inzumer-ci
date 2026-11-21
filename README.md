@@ -66,6 +66,24 @@ Dependencies are updated **by hand**, so no repository keeps a `.github/dependab
 leaves automated PRs open). GitHub vulnerability alerts stay on, and `node-ci` with
 `audit-level: low` fails on any vulnerability.
 
+## Private dependencies
+
+A private package installed straight from its GitHub repository (for example
+`"@inzumer/notedoc-emails": "git+https://github.com/inzumer/notedoc-emails-react.git#v0.1.0"`)
+needs a token to install. Create a **fine-grained token** with read-only `Contents` on that repository
+only, save it as the `PRIVATE_DEPS_TOKEN` secret of the caller and pass it to `node-ci.yml` or
+`a11y.yml`:
+
+```yaml
+jobs:
+  ci:
+    uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
+    secrets:
+      private-deps-token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
+```
+
+The token only reaches the install step, as a `git` URL rewrite for `https://github.com/`.
+
 ## Publishing to npm
 
 `changesets-release.yml` publishes with npm **trusted publishing**: no secret to store or rotate.
