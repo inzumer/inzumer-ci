@@ -20,6 +20,9 @@ permissions:
 jobs:
   ci:
     uses: inzumer/inzumer-ci/.github/workflows/node-ci.yml@v1
+    # Private dependencies installed from GitHub (git+https): pass a read-only token.
+    # secrets:
+    #   private-deps-token: ${{ secrets.PRIVATE_DEPS_TOKEN }}
     with:
       ref: ${{ inputs.ref || github.ref }}
       package-manager: pnpm
